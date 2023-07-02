@@ -1,0 +1,256 @@
+openapi: 3.0.0
+info:
+  title: Game Dealert API Facade
+  termsOfService: 'https://game-dealert.com/terms'
+  description: Specification of the facade api project Game Dealert
+  version: "1.0.0"
+  contact:
+    email: kuramshin.py@yandex.ru
+  license:
+    name: Game Dealert EULA 1.0
+servers:
+  - description: Main backend server
+    url: 'https://api.game-dealert.com/rest/1.0.0'
+tags:
+  - name: users
+    description: Everything about users system info
+  - name: notifications
+    description: Notifications about discounts on games from the watchlist
+  - name: games
+    description: Games from watchlist
+  - name: watchlists
+    description: List of games to watch for discounts and promotions
+  - name: proxies
+    description: A pool of proxies for interacting with game distribution sites (such as PS Store)
+  - name: system-config
+    description: Data on the Game Dealert system
+paths:
+#                                          USER ENDPOINTS
+  /users:
+    post:
+      tags:
+        - users
+      summary: Create user
+      description: Creating a user when registering in the system
+      operationId: createUser
+      responses:
+        '201':
+          $ref: '#/components/responses/UserOK'
+      security:
+        - game_dealert_auth:
+            - 'write:users'
+            - 'read:users'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+        description: Created user object
+        required: true
+  '/users/{userId}':
+    get:
+      tags:
+        - users
+      summary: Get user info by id
+      operationId: getUserById
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          $ref: '#/components/responses/UserOK'
+        '404':
+          description: User not found
+      security:
+        - game_dealert_auth:
+            - 'read:users'
+    put:
+      tags:
+        - users
+      summary: Update user info
+      description: This can only be done by the logged in user.
+      operationId: updateUserById
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          $ref: '#/components/responses/UserOK'
+        '404':
+          description: User not found
+      security:
+        - game_dealert_auth:
+            - 'write:users'
+            - 'read:users'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+        description: New user info
+        required: true
+    delete:
+      tags:
+        - users
+      summary: Delete user
+      description: This can only be done by the logged in user
+      operationId: deleteUserById
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          $ref: '#/components/responses/UserOK'
+      security:
+        - game_dealert_auth:
+            - 'write:users'
+            - 'read:users'
+#                                          NOTIFICATIONS ENDPOINTS
+  '/notifications/{userId}':
+    get:
+      tags:
+        - notifications
+      summary: Get user notifications by user id
+      operationId: getNotificationsByUserId
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: successful getting notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+        '404':
+          description: User notifications not found
+      security:
+        - game_dealert_auth:
+            - 'read:notifications'
+    put:
+      tags:
+        - notifications
+      summary: Update user notifications
+      description: This can only be done by the logged in user.
+      operationId: updateUserNotificationsByUserId
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          $ref: '#/components/responses/NotificationsOK'
+        '404':
+          description: User not found
+      security:
+        - game_dealert_auth:
+            - 'read:notifications'
+            - 'write:notifications'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Notification'
+        description: Update notifications
+        required: true
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        passwordHash:
+          type: string
+        lastLoginDateTime:
+          type: string
+          format: date-time
+        region:
+          type: string
+          enum:
+            - RU
+            - USA
+            - EU
+        status:
+          type: string
+          enum:
+            - creation
+            - active
+            - blocked
+            - deleted
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        userId:
+          type: integer
+          format: int64
+        type:
+          type: string
+          enum:
+            - discount
+            - stock
+            - event
+            - system
+        creationDateTime:
+          type: string
+          format: date-time
+        subject:
+          type: string
+          enum:
+            - game
+            - event
+        subjectId:
+          type: integer
+          format: int64
+        read:
+          type: boolean
+  parameters:
+    UserId:
+      name: userId
+      in: path
+      description: user id
+      required: true
+      schema:
+        type: string
+  requestBodies:
+    User:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/User'
+      description: User object
+      required: true
+  responses:
+    UserOK:
+      description: successful user operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/User'
+    NotificationsOK:
+      description: successful notifications operation
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Notification'
+  securitySchemes:
+    game_dealert_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: 'https://api.game-dealert.com/oauth/dialog'
+          scopes:
+            'write:users': modify user in system
+            'read:users': read user
+            'read:notifications': read user notifications
+            'update:notifications': update user notifications
+    api_key:
+      type: apiKey
+      name: api_key
+      in: header

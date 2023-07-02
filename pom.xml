@@ -4,9 +4,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.bugs.corp</groupId>
-    <artifactId>ps-dealert</artifactId>
+    <groupId>com.game-dealert.api</groupId>
+    <artifactId>game-dealert</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
+    <name>Game Dealert</name>
 
 </project>
